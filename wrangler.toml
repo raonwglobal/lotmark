@@ -1,0 +1,13 @@
+name = "v-verify-api"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+FRONTEND_URL = "https://v-verify.pages.dev"
+
+# Secret (wrangler secret put 으로 설정, 코드/설정파일에 넣지 말 것)
+# MONGODB_URI
+
+[observability]
+enabled = true
