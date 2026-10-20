@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>V-Verify — 베트남 프로젝트 검증</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9bb4;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+    header h1 span { color: var(--accent); }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #1e3a5f;
+      color: #93c5fd;
+      text-transform: uppercase;
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+    input, select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+    button:hover, .btn:hover { background: var(--accent-hover); }
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.secondary:hover { border-color: var(--accent); color: var(--accent); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: end; }
+    .row > * { flex: 1; min-width: 140px; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .grade {
+      font-weight: 800;
+      font-size: 1.25rem;
+    }
+    .grade-A { color: #22c55e; }
+    .grade-B { color: #84cc16; }
+    .grade-C { color: #eab308; }
+    .grade-D { color: #f97316; }
+    .grade-E { color: #ef4444; }
+    .project-list { display: grid; gap: 0.75rem; }
+    .project-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      cursor: pointer;
+    }
+    .project-item:hover { border-color: var(--accent); }
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+    .price-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .price-card.popular { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .price-card h3 { margin: 0 0 0.25rem; }
+    .price-card .amount { font-size: 1.5rem; font-weight: 800; margin: 0.5rem 0; }
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .alert.ok { background: #14532d; color: #bbf7d0; }
+    .alert.err { background: #7f1d1d; color: #fecaca; }
+    .alert.info { background: #1e3a5f; color: #bfdbfe; }
+    #detail { display: none; }
+    #detail.visible { display: block; }
+    pre {
+      background: var(--bg);
+      padding: 0.75rem;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span>V</span>-Verify</h1>
+    <div id="header-user" class="muted">로그인 필요</div>
+  </header>
+
+  <main>
+    <div id="alerts"></div>
+
+    <!-- Login -->
+    <section class="card" id="login-card">
+      <h2 style="margin-top:0">이메일 로그인</h2>
+      <p class="muted">계정 없으면 자동 생성됩니다. 비밀번호 없이 토큰 기반 MVP입니다.</p>
+      <div class="row">
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@company.com" />
+        </div>
+        <div style="flex:0">
+          <label>&nbsp;</label>
+          <button id="btn-login">로그인</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="card" id="pricing-card" style="display:none">
+      <h2 style="margin-top:0">플랜 업그레이드</h2>
+      <p class="muted">구독 후 전체 검증 노트·GPS·출처 상세를 확인할 수 있습니다. DataRoom은 프로젝트별 문서 다운로드용 일회성 결제입니다.</p>
+      <div class="pricing">
+        <div class="price-card">
+          <h3>Basic</h3>
+          <div class="amount">$199<span class="muted" style="font-size:0.9rem">/mo</span></div>
+          <p class="muted">전체 상세 + 기본 필터</p>
+          <button data-price="basic">구독</button>
+        </div>
+        <div class="price-card popular">
+          <h3>Pro</h3>
+          <div class="amount">$599<span class="muted" style="font-size:0.9rem">/mo</span></div>
+          <p class="muted">API · 대량 조회</p>
+          <button data-price="pro">구독</button>
+        </div>
+        <div class="price-card">
+          <h3>Enterprise</h3>
+          <div class="amount">$1,500<span class="muted" style="font-size:0.9rem">/mo</span></div>
+          <p class="muted">전용 지원 · SLA</p>
+          <button data-price="enterprise">구독</button>
+        </div>
+      </div>
+      <p style="margin-top:1rem">
+        <button class="secondary" id="btn-portal">구독 관리 (Stripe Portal)</button>
+        <button class="secondary" id="btn-logout">로그아웃</button>
+      </p>
+    </section>
+
+    <!-- Filters + List -->
+    <section class="card">
+      <h2 style="margin-top:0">검증 프로젝트</h2>
+      <div class="row" style="margin-bottom:1rem">
+        <div>
+          <label>지역</label>
+          <input id="f-region" placeholder="예: HCMC" />
+        </div>
+        <div>
+          <label>등급</label>
+          <select id="f-grade">
+            <option value="">전체</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+          </select>
+        </div>
+        <div>
+          <label>검색</label>
+          <input id="f-search" placeholder="프로젝트명" />
+        </div>
+        <div style="flex:0">
+          <label>&nbsp;</label>
+          <button id="btn-search">조회</button>
+        </div>
+      </div>
+      <div id="project-list" class="project-list">
+        <p class="muted">로그인 후 조회하세요.</p>
+      </div>
+    </section>
+
+    <!-- Detail -->
+    <section class="card" id="detail">
+      <h2 style="margin-top:0" id="detail-title">상세</h2>
+      <div id="detail-body"></div>
+      <p style="margin-top:1rem">
+        <button class="secondary" id="btn-back">목록으로</button>
+        <button id="btn-dataroom" style="display:none">DataRoom $99 — 문서 잠금 해제</button>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    // Configure API base for Pages deploy (override after deploy if needed)
+    window.__API_BASE__ = window.__API_BASE__ || localStorage.getItem('vv_api') || 'https://v-verify-api.your-subdomain.workers.dev';
+
+    const $ = (s) => document.querySelector(s);
+    const alerts = $('#alerts');
+    let currentProjectId = null;
+
+    function showAlert(msg, type = 'info') {
+      alerts.innerHTML = `<div class="alert ${type}">${msg}</div>`;
+      setTimeout(() => { if (alerts.innerHTML.includes(msg)) alerts.innerHTML = ''; }, 6000);
+    }
+
+    async function api(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      const t = localStorage.getItem('vv_token');
+      if (t) headers['Authorization'] = `Bearer ${t}`;
+      const res = await fetch(window.__API_BASE__ + path, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw Object.assign(new Error(data.error || '요청 실패'), { status: res.status, data });
+      return data;
+    }
+
+    function renderUser(me) {
+      if (!me) {
+        $('#header-user').textContent = '로그인 필요';
+        $('#login-card').style.display = 'block';
+        $('#pricing-card').style.display = 'none';
+        return;
+      }
+      $('#header-user').innerHTML = `${me.email} · <span class="badge">${me.plan}</span>`;
+      $('#login-card').style.display = 'none';
+      $('#pricing-card').style.display = 'block';
+    }
+
+    async function refreshMe() {
+      try {
+        const me = await api('/api/me');
+        localStorage.setItem('vv_plan', me.plan);
+        renderUser(me);
+        return me;
+      } catch {
+        localStorage.removeItem('vv_token');
+        renderUser(null);
+        return null;
+      }
+    }
+
+    async function loadProjects() {
+      const region = $('#f-region').value.trim();
+      const grade = $('#f-grade').value;
+      const search = $('#f-search').value.trim();
+      const params = new URLSearchParams();
+      if (region) params.set('region', region);
+      if (grade) params.set('grade', grade);
+      if (search) params.set('search', search);
+      const q = params.toString();
+      try {
+        const list = await api('/api/projects' + (q ? `?${q}` : ''));
+        const el = $('#project-list');
+        if (!list.length) {
+          el.innerHTML = '<p class="muted">프로젝트가 없습니다. POST /api/projects 로 시드하세요.</p>';
+          return;
+        }
+        el.innerHTML = list.map(p => `
+          <div class="project-item" data-id="${p.projectId}">
+            <div class="grade grade-${p.grade || 'E'}">${p.grade || '?'}</div>
+            <div>
+              <strong>${p.name || p.projectId}</strong>
+              <div class="muted">${p.region || '-'} · ${p.type || '-'} ${p._gated ? '· <em>요약만 표시</em>' : ''}</div>
+            </div>
+            <div class="muted">${p.priceUsd != null ? '$' + Number(p.priceUsd).toLocaleString() : ''}</div>
+          </div>
+        `).join('');
+        el.querySelectorAll('.project-item').forEach(node => {
+          node.addEventListener('click', () => openDetail(node.dataset.id));
+        });
+      } catch (e) {
+        showAlert(e.message, 'err');
+      }
+    }
+
+    async function openDetail(id) {
+      currentProjectId = id;
+      try {
+        const p = await api('/api/projects/' + encodeURIComponent(id));
+        $('#detail').classList.add('visible');
+        $('#detail-title').textContent = p.name || p.projectId;
+        const gated = p._gated || p._upgradeRequired;
+        let html = `<p><span class="grade grade-${p.grade}">Grade ${p.grade || '?'}</span>
+          ${p.gradeReason ? `<span class="muted"> — ${p.gradeReason}</span>` : ''}</p>`;
+        if (gated) {
+          html += `<div class="alert info">무료 플랜은 요약만 제공합니다. Basic 이상 구독 시 전체 검증 데이터를 볼 수 있습니다.</div>`;
+          $('#btn-dataroom').style.display = 'none';
+        } else {
+          html += `<pre>${JSON.stringify(p, null, 2)}</pre>`;
+          const needsDR = (p.sources || []).some(s => s._dataRoomRequired);
+          $('#btn-dataroom').style.display = needsDR ? 'inline-flex' : 'none';
+        }
+        $('#detail-body').innerHTML = html;
+        window.scrollTo({ top: $('#detail').offsetTop - 60, behavior: 'smooth' });
+      } catch (e) {
+        showAlert(e.message, 'err');
+      }
+    }
+
+    async function startCheckout(priceKey, projectId) {
+      try {
+        const { url } = await api('/api/checkout', {
+          method: 'POST',
+          body: JSON.stringify({ priceKey, projectId: projectId || null }),
+        });
+        if (url) window.location.href = url;
+        else showAlert('Checkout URL 없음', 'err');
+      } catch (e) {
+        showAlert(e.message || 'Checkout 실패', 'err');
+      }
+    }
+
+    // Events
+    $('#btn-login').addEventListener('click', async () => {
+      const email = $('#email').value.trim();
+      if (!email) return showAlert('이메일을 입력하세요', 'err');
+      try {
+        const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email }) });
+        localStorage.setItem('vv_token', data.token);
+        localStorage.setItem('vv_email', data.email);
+        localStorage.setItem('vv_plan', data.plan);
+        showAlert('로그인 성공 · 플랜: ' + data.plan, 'ok');
+        renderUser(data);
+        await loadProjects();
+      } catch (e) {
+        showAlert(e.message, 'err');
+      }
+    });
+
+    $('#btn-logout').addEventListener('click', () => {
+      localStorage.removeItem('vv_token');
+      localStorage.removeItem('vv_email');
+      localStorage.removeItem('vv_plan');
+      renderUser(null);
+      $('#project-list').innerHTML = '<p class="muted">로그인 후 조회하세요.</p>';
+      $('#detail').classList.remove('visible');
+    });
+
+    $('#btn-search').addEventListener('click', loadProjects);
+    $('#btn-back').addEventListener('click', () => $('#detail').classList.remove('visible'));
+
+    document.querySelectorAll('[data-price]').forEach(btn => {
+      btn.addEventListener('click', () => startCheckout(btn.dataset.price));
+    });
+
+    $('#btn-dataroom').addEventListener('click', () => {
+      if (currentProjectId) startCheckout('dataroom', currentProjectId);
+    });
+
+    $('#btn-portal').addEventListener('click', async () => {
+      try {
+        const { url } = await api('/api/portal', { method: 'POST' });
+        if (url) window.location.href = url;
+      } catch (e) {
+        showAlert(e.message, 'err');
+      }
+    });
+
+    // Return from Stripe
+    const params = new URLSearchParams(location.search);
+    if (params.get('checkout') === 'success') {
+      showAlert('결제 완료. 웹훅 반영까지 수 초 걸릴 수 있습니다. 새로고침하세요.', 'ok');
+      history.replaceState({}, '', location.pathname);
+    } else if (params.get('checkout') === 'cancel') {
+      showAlert('결제가 취소되었습니다.', 'info');
+      history.replaceState({}, '', location.pathname);
+    }
+
+    // Boot
+    (async () => {
+      if (localStorage.getItem('vv_token')) {
+        await refreshMe();
+        await loadProjects();
+      }
+    })();
+  </script>
+</body>
+</html>

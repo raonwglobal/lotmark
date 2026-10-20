@@ -1,4 +1,5 @@
 export const SCORES = { IRC:40, ERC:30, LURC:30, DPI_PORTAL:20, FIELD_PHOTO:25, GOV_DOC:15, NEWS:10, SELLER_DOC:5 };
+
 export function calculateGrade(project){
   const sources = project.sources || [];
   let score = 0;
@@ -16,4 +17,42 @@ export function calculateGrade(project){
     if(idx<4){ grade=order[idx+1]; reason+=' (블랙리스트 강등)'; }
   }
   return { score, grade, reason };
+}
+
+/** Free tier: strip sensitive verification fields */
+export function redactProjectForPlan(project, plan, dataRoomPurchases = []) {
+  if (!project) return project;
+  const p = { ...project };
+  const paid = plan && plan !== 'free';
+  const hasDataRoom = dataRoomPurchases?.includes(project.projectId);
+
+  if (!paid) {
+    // Free: list-level summary only
+    return {
+      projectId: p.projectId,
+      name: p.name,
+      region: p.region,
+      type: p.type,
+      status: p.status,
+      grade: p.grade,
+      areaSqm: p.areaSqm,
+      priceUsd: p.priceUsd,
+      isPublic: p.isPublic,
+      lastVerifiedDate: p.lastVerifiedDate,
+      _gated: true,
+      _upgradeRequired: true,
+    };
+  }
+
+  // Paid: full record; DataRoom unlocks document URLs
+  if (!hasDataRoom && p.sources) {
+    p.sources = p.sources.map(s => ({
+      docType: s.docType,
+      trustScore: s.trustScore,
+      isOfficial: s.isOfficial,
+      fileUrl: null,
+      _dataRoomRequired: true,
+    }));
+  }
+  return p;
 }
