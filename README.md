@@ -1,9 +1,9 @@
-# V-Verify (lotmark) — Cloudflare 수익화 앱
+# Lotmark — Cloudflare 수익화 앱
 
 Cloudflare Workers + Pages + MongoDB Atlas + Stripe.  
 베트남 프로젝트 문서 검증(A~E 등급) + 구독/DataRoom 결제.
 
-> 리포: `lotmark` · Worker: `v-verify-api`  
+> 리포: `lotmark` · Worker: `lotmark-api` · Pages: `lotmark`  
 > `.agents/luna-chat-coder` 는 개발 보조 도구이며 제품 코드가 아닙니다.
 
 ## Architecture
@@ -45,6 +45,8 @@ Cloudflare Workers + Pages + MongoDB Atlas + Stripe.
 
 docType: `IRC` `ERC` `LURC` `DPI_PORTAL` `FIELD_PHOTO` `GOV_DOC` `NEWS` `SELLER_DOC`
 
+프로젝트 ID 접두사: `LM-` (예: `LM-1730000000000`)
+
 ---
 
 ## 배포 순서 (운영자)
@@ -53,10 +55,10 @@ docType: `IRC` `ERC` `LURC` `DPI_PORTAL` `FIELD_PHOTO` `GOV_DOC` `NEWS` `SELLER_
 
 | 이름 | 유형 | 금액 | Secret |
 |------|------|------|--------|
-| Basic | monthly | $199 | `STRIPE_PRICE_BASIC` |
-| Pro | monthly | $599 | `STRIPE_PRICE_PRO` |
-| Enterprise | monthly | $1500 | `STRIPE_PRICE_ENTERPRISE` |
-| DataRoom | one-time | $99 | `STRIPE_PRICE_DATAROOM` |
+| Lotmark Basic | monthly | $199 | `STRIPE_PRICE_BASIC` |
+| Lotmark Pro | monthly | $599 | `STRIPE_PRICE_PRO` |
+| Lotmark Enterprise | monthly | $1500 | `STRIPE_PRICE_ENTERPRISE` |
+| Lotmark DataRoom | one-time | $99 | `STRIPE_PRICE_DATAROOM` |
 
 ### 2) Secrets
 
@@ -82,20 +84,23 @@ npx wrangler secret put STRIPE_WEBHOOK_SECRET
 ### 3) Deploy
 
 ```bash
-# wrangler.toml FRONTEND_URL 수정
+# wrangler.toml FRONTEND_URL 을 실제 Pages URL로 수정
 npm run deploy
-npx wrangler pages deploy frontend --project-name=v-verify
+# → https://lotmark-api.<subdomain>.workers.dev
+
+npx wrangler pages deploy frontend --project-name=lotmark
+# → https://lotmark.pages.dev (또는 커스텀 도메인)
 ```
 
 프론트 API URL:
 
 ```js
-localStorage.setItem('vv_api', 'https://v-verify-api.<subdomain>.workers.dev');
+localStorage.setItem('lm_api', 'https://lotmark-api.<subdomain>.workers.dev');
 ```
 
 ### 4) Stripe Webhook
 
-URL: `https://v-verify-api.<subdomain>.workers.dev/api/webhook`  
+URL: `https://lotmark-api.<subdomain>.workers.dev/api/webhook`  
 Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`
 
 ### 5) 스모크
@@ -112,7 +117,7 @@ Events: `checkout.session.completed`, `customer.subscription.updated`, `customer
 
 ```bash
 npm install
-# .dev.vars 에 MONGODB_URI, STRIPE_*, ADMIN_EMAILS, FRONTEND_URL
+cp .dev.vars.example .dev.vars   # 값 채우기
 npm run dev
 ```
 
