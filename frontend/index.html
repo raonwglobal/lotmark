@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>V-Verify — 베트남 프로젝트 검증</title>
+  <title>Lotmark — 베트남 프로젝트 검증</title>
   <style>
     :root {
       --bg: #0f1419; --card: #1a2332; --border: #2d3a4f; --text: #e7ecf3;
@@ -54,7 +54,7 @@
 </head>
 <body>
   <header>
-    <h1><span>V</span>-Verify</h1>
+    <h1><span>Lot</span>mark</h1>
     <div id="header-user" class="muted">로그인 필요</div>
   </header>
 
@@ -68,7 +68,7 @@
         <div><label>Email</label><input id="email" type="email" placeholder="you@company.com" /></div>
         <div style="flex:0"><label>&nbsp;</label><button id="btn-login">로그인</button></div>
       </div>
-      <p class="muted" style="margin-top:0.75rem">API Base: <code id="api-base-label"></code> · localStorage <code>vv_api</code> 로 변경 가능</p>
+      <p class="muted" style="margin-top:0.75rem">API Base: <code id="api-base-label"></code> · localStorage <code>lm_api</code> 로 변경 가능</p>
     </section>
 
     <section class="card" id="pricing-card" style="display:none">
@@ -169,7 +169,7 @@
   </main>
 
   <script>
-    window.__API_BASE__ = window.__API_BASE__ || localStorage.getItem('vv_api') || 'https://v-verify-api.your-subdomain.workers.dev';
+    window.__API_BASE__ = window.__API_BASE__ || localStorage.getItem('lm_api') || 'https://lotmark-api.your-subdomain.workers.dev';
     document.getElementById('api-base-label').textContent = window.__API_BASE__;
 
     const $ = (s) => document.querySelector(s);
@@ -184,7 +184,7 @@
 
     async function api(path, options = {}) {
       const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-      const t = localStorage.getItem('vv_token');
+      const t = localStorage.getItem('lm_token');
       if (t) headers['Authorization'] = `Bearer ${t}`;
       const res = await fetch(window.__API_BASE__ + path, { ...options, headers });
       const data = await res.json().catch(() => ({}));
@@ -212,11 +212,11 @@
     async function refreshMe() {
       try {
         const me = await api('/api/me');
-        localStorage.setItem('vv_plan', me.plan);
+        localStorage.setItem('lm_plan', me.plan);
         renderUser(me);
         return me;
       } catch {
-        localStorage.removeItem('vv_token');
+        localStorage.removeItem('lm_token');
         renderUser(null);
         return null;
       }
@@ -283,9 +283,9 @@
       if (!email) return showAlert('이메일을 입력하세요', 'err');
       try {
         const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email }) });
-        localStorage.setItem('vv_token', data.token);
-        localStorage.setItem('vv_email', data.email);
-        localStorage.setItem('vv_plan', data.plan);
+        localStorage.setItem('lm_token', data.token);
+        localStorage.setItem('lm_email', data.email);
+        localStorage.setItem('lm_plan', data.plan);
         showAlert('로그인 · ' + data.plan + (data.isAdmin ? ' · admin' : ''), 'ok');
         renderUser(data);
         await loadProjects();
@@ -293,7 +293,7 @@
     });
 
     $('#btn-logout').addEventListener('click', () => {
-      ['vv_token','vv_email','vv_plan'].forEach(k => localStorage.removeItem(k));
+      ['lm_token','lm_email','lm_plan'].forEach(k => localStorage.removeItem(k));
       renderUser(null);
       $('#project-list').innerHTML = '<p class="muted">로그인 후 조회하세요.</p>';
       $('#detail').classList.remove('visible');
@@ -312,7 +312,7 @@
     $('#btn-rotate').addEventListener('click', async () => {
       try {
         const data = await api('/api/auth/rotate-token', { method: 'POST' });
-        localStorage.setItem('vv_token', data.token);
+        localStorage.setItem('lm_token', data.token);
         showAlert('새 토큰 발급됨. 이전 토큰 무효.', 'ok');
         await refreshMe();
       } catch (e) { showAlert(e.message, 'err'); }
@@ -343,23 +343,21 @@
         areaSqm: Number($('#c-area').value) || undefined,
         priceUsd: Number($('#c-price').value) || undefined,
         gps: { raw: $('#c-gps').value.trim() },
-        sellerCompany: { name: $('#c-seller').value.trim(), taxCode: $('#c-tax').value.trim(), blacklist: false },
+        sellerCompany: { name: $('#c-seller').value.trim(), taxCode: $('#c-tax').value.trim() },
         sources,
-        isPublic: true,
       };
-      if (!body.name) return showAlert('이름 필수', 'err');
       try {
-        const p = await api('/api/projects', { method: 'POST', body: JSON.stringify(body) });
-        showAlert('생성 ' + p.projectId + ' · Grade ' + p.grade, 'ok');
+        const created = await api('/api/projects', { method: 'POST', body: JSON.stringify(body) });
+        showAlert('생성됨 · ' + created.projectId + ' · Grade ' + created.grade, 'ok');
         $('#create-card').classList.remove('visible');
         await loadProjects();
-        openDetail(p.projectId);
+        openDetail(created.projectId);
       } catch (e) { showAlert(e.message, 'err'); }
     });
 
     $('#btn-add-source').addEventListener('click', async () => {
       if (!currentProjectId) return;
-      const src = {
+      const body = {
         docType: $('#s-type').value,
         fileUrl: $('#s-url').value.trim(),
         trustScore: Number($('#s-trust').value) || 50,
@@ -367,63 +365,65 @@
       };
       try {
         const r = await api('/api/projects/' + encodeURIComponent(currentProjectId) + '/sources', {
-          method: 'POST', body: JSON.stringify({ sources: [src] }),
+          method: 'POST', body: JSON.stringify(body),
         });
-        showAlert('재등급 ' + r.grade + ' (score ' + r.score + ')', 'ok');
+        showAlert('출처 추가 · Grade ' + r.grade + ' (score ' + r.score + ')', 'ok');
         openDetail(currentProjectId);
         loadProjects();
       } catch (e) { showAlert(e.message, 'err'); }
     });
 
-    async function doBlacklist(flag) {
+    $('#btn-bl').addEventListener('click', async () => {
       try {
         const r = await api('/api/admin/blacklist', {
           method: 'POST',
-          body: JSON.stringify({ projectId: $('#a-pid').value.trim() || undefined, taxCode: $('#a-tax').value.trim() || undefined, blacklist: flag }),
+          body: JSON.stringify({ projectId: $('#a-pid').value.trim() || undefined, taxCode: $('#a-tax').value.trim() || undefined, blacklist: true }),
         });
-        $('#admin-out').innerHTML = '<pre>' + JSON.stringify(r, null, 2) + '</pre>';
-        showAlert('블랙리스트 반영', 'ok');
-        loadProjects();
+        showAlert('블랙리스트 ON · ' + JSON.stringify(r), 'ok');
       } catch (e) { showAlert(e.message, 'err'); }
-    }
-    $('#btn-bl').addEventListener('click', () => doBlacklist(true));
-    $('#btn-bl-off').addEventListener('click', () => doBlacklist(false));
-
-    async function doVis(isPublic) {
+    });
+    $('#btn-bl-off').addEventListener('click', async () => {
+      try {
+        const r = await api('/api/admin/blacklist', {
+          method: 'POST',
+          body: JSON.stringify({ projectId: $('#a-pid').value.trim() || undefined, taxCode: $('#a-tax').value.trim() || undefined, blacklist: false }),
+        });
+        showAlert('블랙리스트 OFF · ' + JSON.stringify(r), 'ok');
+      } catch (e) { showAlert(e.message, 'err'); }
+    });
+    $('#btn-pub').addEventListener('click', async () => {
       try {
         const r = await api('/api/admin/visibility', {
           method: 'POST',
-          body: JSON.stringify({ projectId: $('#a-vis-pid').value.trim(), isPublic }),
+          body: JSON.stringify({ projectId: $('#a-vis-pid').value.trim(), isPublic: true }),
         });
-        $('#admin-out').innerHTML = '<pre>' + JSON.stringify(r, null, 2) + '</pre>';
-        loadProjects();
+        showAlert('공개 · ' + JSON.stringify(r), 'ok');
       } catch (e) { showAlert(e.message, 'err'); }
-    }
-    $('#btn-pub').addEventListener('click', () => doVis(true));
-    $('#btn-priv').addEventListener('click', () => doVis(false));
-
+    });
+    $('#btn-priv').addEventListener('click', async () => {
+      try {
+        const r = await api('/api/admin/visibility', {
+          method: 'POST',
+          body: JSON.stringify({ projectId: $('#a-vis-pid').value.trim(), isPublic: false }),
+        });
+        showAlert('비공개 · ' + JSON.stringify(r), 'ok');
+      } catch (e) { showAlert(e.message, 'err'); }
+    });
     $('#btn-users').addEventListener('click', async () => {
       try {
         const users = await api('/api/admin/users');
-        $('#admin-out').innerHTML = '<table><tr><th>email</th><th>plan</th><th>status</th><th>role</th></tr>' +
-          users.map(u => `<tr><td>${u.email}</td><td>${u.plan}</td><td>${u.subscriptionStatus}</td><td>${u.role || 'user'}</td></tr>`).join('') + '</table>';
+        $('#admin-out').innerHTML = '<pre>' + JSON.stringify(users, null, 2) + '</pre>';
       } catch (e) { showAlert(e.message, 'err'); }
     });
 
-    const params = new URLSearchParams(location.search);
-    if (params.get('checkout') === 'success') {
-      showAlert('결제 완료. 웹훅 반영 후 새로고침하세요.', 'ok');
-      history.replaceState({}, '', location.pathname);
-    } else if (params.get('checkout') === 'cancel') {
-      showAlert('결제 취소', 'info');
-      history.replaceState({}, '', location.pathname);
-    }
-
     (async () => {
-      if (localStorage.getItem('vv_token')) {
+      if (localStorage.getItem('lm_token')) {
         await refreshMe();
         await loadProjects();
       }
+      const params = new URLSearchParams(location.search);
+      if (params.get('checkout') === 'success') showAlert('결제 성공. 플랜이 반영되기까지 수 초 걸릴 수 있습니다.', 'ok');
+      if (params.get('checkout') === 'cancel') showAlert('결제 취소됨', 'info');
     })();
   </script>
 </body>
