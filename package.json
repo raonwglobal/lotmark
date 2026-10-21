@@ -1,11 +1,12 @@
 {
   "name": "v-verify-cloudflare",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "deploy:frontend": "wrangler pages deploy frontend --project-name=v-verify"
+    "deploy:frontend": "wrangler pages deploy frontend --project-name=v-verify",
+    "check": "wrangler deploy --dry-run"
   },
   "dependencies": {
     "hono": "^4.5.0",
@@ -13,6 +14,6 @@
     "stripe": "^16.0.0"
   },
   "devDependencies": {
-    "wrangler": "^3.60.0"
+    "wrangler": "^3.114.0"
   }
 }

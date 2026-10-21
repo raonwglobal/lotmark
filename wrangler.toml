@@ -1,13 +1,21 @@
 name = "v-verify-api"
 main = "src/worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+# Non-secret defaults. Change after Pages URL is known, then re-deploy Worker.
 [vars]
 FRONTEND_URL = "https://v-verify.pages.dev"
 
-# Secret (wrangler secret put 으로 설정, 코드/설정파일에 넣지 말 것)
-# MONGODB_URI
+# Secrets — never commit. Set with: npx wrangler secret put <NAME>
+#   MONGODB_URI
+#   STRIPE_SECRET_KEY
+#   STRIPE_WEBHOOK_SECRET
+#   STRIPE_PRICE_BASIC
+#   STRIPE_PRICE_PRO
+#   STRIPE_PRICE_ENTERPRISE
+#   STRIPE_PRICE_DATAROOM
+#   ADMIN_EMAILS
 
 [observability]
 enabled = true
