@@ -1,11 +1,11 @@
-name = "v-verify-api"
+name = "lotmark-api"
 main = "src/worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 # Non-secret defaults. Change after Pages URL is known, then re-deploy Worker.
 [vars]
-FRONTEND_URL = "https://v-verify.pages.dev"
+FRONTEND_URL = "https://lotmark.pages.dev"
 
 # Secrets — never commit. Set with: npx wrangler secret put <NAME>
 #   MONGODB_URI

@@ -1,10 +1,10 @@
-// V-Verify API client
+// Lotmark API client
 const API_BASE = import.meta?.env?.VITE_API_URL
   || (typeof window !== 'undefined' && window.__API_BASE__)
-  || 'https://v-verify-api.your-subdomain.workers.dev';
+  || 'https://lotmark-api.your-subdomain.workers.dev';
 
 function token() {
-  return localStorage.getItem('vv_token') || '';
+  return localStorage.getItem('lm_token') || '';
 }
 
 async function request(path, options = {}) {
@@ -31,16 +31,16 @@ export async function login(email) {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
-  if (data.token) localStorage.setItem('vv_token', data.token);
-  localStorage.setItem('vv_email', data.email || email);
-  localStorage.setItem('vv_plan', data.plan || 'free');
+  if (data.token) localStorage.setItem('lm_token', data.token);
+  localStorage.setItem('lm_email', data.email || email);
+  localStorage.setItem('lm_plan', data.plan || 'free');
   return data;
 }
 
 export function logout() {
-  localStorage.removeItem('vv_token');
-  localStorage.removeItem('vv_email');
-  localStorage.removeItem('vv_plan');
+  localStorage.removeItem('lm_token');
+  localStorage.removeItem('lm_email');
+  localStorage.removeItem('lm_plan');
 }
 
 export async function fetchMe() {
