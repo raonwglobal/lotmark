@@ -47,6 +47,10 @@ export async function fetchMe() {
   return request('/api/me');
 }
 
+export async function rotateToken() {
+  return request('/api/auth/rotate-token', { method: 'POST' });
+}
+
 export async function fetchProjects(filters = {}) {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => {
@@ -60,6 +64,24 @@ export async function fetchProject(id) {
   return request(`/api/projects/${encodeURIComponent(id)}`);
 }
 
+export async function createProject(body) {
+  return request('/api/projects', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function updateProject(id, body) {
+  return request(`/api/projects/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function addSources(id, sources) {
+  return request(`/api/projects/${encodeURIComponent(id)}/sources`, {
+    method: 'POST',
+    body: JSON.stringify({ sources }),
+  });
+}
+
 export async function createCheckout(priceKey, projectId = null) {
   return request('/api/checkout', {
     method: 'POST',
@@ -69,6 +91,28 @@ export async function createCheckout(priceKey, projectId = null) {
 
 export async function openPortal() {
   return request('/api/portal', { method: 'POST' });
+}
+
+export async function seedProjects() {
+  return request('/api/seed', { method: 'POST' });
+}
+
+export async function adminUsers() {
+  return request('/api/admin/users');
+}
+
+export async function adminBlacklist(payload) {
+  return request('/api/admin/blacklist', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function adminVisibility(projectId, isPublic) {
+  return request('/api/admin/visibility', {
+    method: 'POST',
+    body: JSON.stringify({ projectId, isPublic }),
+  });
 }
 
 export async function health() {
