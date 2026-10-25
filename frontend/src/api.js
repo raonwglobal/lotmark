@@ -1,7 +1,7 @@
 // Lotmark API client
 const API_BASE = import.meta?.env?.VITE_API_URL
   || (typeof window !== 'undefined' && window.__API_BASE__)
-  || 'https://lotmark-api.your-subdomain.workers.dev';
+  || 'https://lotmark.fakelove-u.workers.dev';
 
 function token() {
   return localStorage.getItem('lm_token') || '';
