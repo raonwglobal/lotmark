@@ -3,6 +3,15 @@ import { getUserModel } from '../lib/db.js';
 import { resolveUser, requireUser } from '../lib/auth.js';
 import { getStripe, PRICE_KEYS } from '../lib/stripe.js';
 
+function frontendBase(c) {
+  if (c.env.FRONTEND_URL) return c.env.FRONTEND_URL.replace(/\/$/, '');
+  try {
+    return new URL(c.req.url).origin;
+  } catch {
+    return 'https://lotmark.fakelove-u.workers.dev';
+  }
+}
+
 export function registerBillingRoutes(app) {
   app.post('/api/checkout', async (c) => {
     const user = await resolveUser(c);
@@ -28,7 +37,7 @@ export function registerBillingRoutes(app) {
       await User.updateOne({ _id: user._id }, { stripeCustomerId: customerId, updatedAt: new Date() });
     }
     const isSubscription = priceKey !== 'dataroom';
-    const frontend = c.env.FRONTEND_URL || 'https://lotmark.pages.dev';
+    const frontend = frontendBase(c);
     const sessionParams = {
       customer: customerId,
       mode: isSubscription ? 'subscription' : 'payment',
@@ -139,7 +148,7 @@ export function registerBillingRoutes(app) {
     if (err) return c.json({ error: err.error }, err.status);
     if (!user.stripeCustomerId) return c.json({ error: 'No Stripe customer yet. Subscribe first.' }, 400);
     const stripe = getStripe(c.env);
-    const frontend = c.env.FRONTEND_URL || 'https://lotmark.pages.dev';
+    const frontend = frontendBase(c);
     const portal = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: frontend,
