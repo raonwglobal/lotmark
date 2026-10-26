@@ -1,7 +1,7 @@
-// Lotmark API client
+// Lotmark API client — same-origin by default (unified Worker + Assets)
 const API_BASE = import.meta?.env?.VITE_API_URL
   || (typeof window !== 'undefined' && window.__API_BASE__)
-  || 'https://lotmark.fakelove-u.workers.dev';
+  || (typeof window !== 'undefined' ? '' : 'https://lotmark.fakelove-u.workers.dev');
 
 function token() {
   return localStorage.getItem('lm_token') || '';
