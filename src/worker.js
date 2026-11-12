@@ -1,11 +1,12 @@
 /**
  * Lotmark — unified Cloudflare Worker
- * - /api/* → Hono API (MongoDB, Stripe, auth)
+ * - /api/* → Hono API (MongoDB, Stripe, auth, setup)
  * - everything else → static assets (frontend/)
  */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { registerMetaRoutes } from './routes/meta.js';
+import { registerSetupRoutes } from './routes/setup.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerBillingRoutes } from './routes/billing.js';
 import { registerProjectRoutes } from './routes/projects.js';
@@ -33,6 +34,7 @@ app.use('/api/*', cors({
 }));
 
 registerMetaRoutes(app);
+registerSetupRoutes(app);
 registerAuthRoutes(app);
 registerBillingRoutes(app);
 registerProjectRoutes(app);
@@ -41,9 +43,6 @@ registerSeedRoutes(app);
 
 app.notFound((c) => c.json({ error: 'not found', path: c.req.path }, 404));
 
-/**
- * Dispatch: API → Hono; static/SPA → ASSETS binding.
- */
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
