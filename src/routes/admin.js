@@ -1,6 +1,6 @@
 /** Admin: users, blacklist, visibility */
 import { getProjectModel, getUserModel } from '../lib/db.js';
-import { resolveUser, isAdmin } from '../lib/auth.js';
+import { resolveUser, isAdmin, generateToken } from '../lib/auth.js';
 import { applyGrade } from '../lib/helpers.js';
 
 export function registerAdminRoutes(app) {
@@ -8,8 +8,62 @@ export function registerAdminRoutes(app) {
     const user = await resolveUser(c);
     if (!isAdmin(user, c.env)) return c.json({ error: 'Admin only' }, 403);
     const User = await getUserModel(c.env);
-    const users = await User.find({}).select('-apiToken').sort({ createdAt: -1 }).limit(200).lean();
+    const users = await User.find({})
+      .select('-apiToken')
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
     return c.json(users);
+  });
+
+  app.post('/api/admin/users/update', async (c) => {
+    const actor = await resolveUser(c);
+    if (!isAdmin(actor, c.env)) return c.json({ error: 'Admin only' }, 403);
+    const body = await c.req.json().catch(() => ({}));
+    const email = (body.email || '').toLowerCase().trim();
+    if (!email) return c.json({ error: 'email required' }, 400);
+
+    const User = await getUserModel(c.env);
+    const target = await User.findOne({ email });
+    if (!target) return c.json({ error: 'user not found' }, 404);
+
+    if ((body.role === 'user' || body.disabled === true) && target.role === 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin', disabled: { $ne: true } });
+      if (adminCount <= 1) {
+        return c.json({ error: 'Cannot demote or disable the last admin' }, 400);
+      }
+    }
+
+    if (body.role === 'admin' || body.role === 'user') target.role = body.role;
+    if (body.disabled != null) target.disabled = !!body.disabled;
+    if (body.plan && ['free', 'basic', 'pro', 'enterprise'].includes(body.plan)) {
+      target.plan = body.plan;
+    }
+    target.updatedAt = new Date();
+    await target.save();
+
+    return c.json({
+      ok: true,
+      email: target.email,
+      role: target.role,
+      disabled: !!target.disabled,
+      plan: target.plan,
+    });
+  });
+
+  app.post('/api/admin/users/revoke-token', async (c) => {
+    const actor = await resolveUser(c);
+    if (!isAdmin(actor, c.env)) return c.json({ error: 'Admin only' }, 403);
+    const body = await c.req.json().catch(() => ({}));
+    const email = (body.email || '').toLowerCase().trim();
+    if (!email) return c.json({ error: 'email required' }, 400);
+    const User = await getUserModel(c.env);
+    const target = await User.findOne({ email });
+    if (!target) return c.json({ error: 'user not found' }, 404);
+    target.apiToken = generateToken();
+    target.updatedAt = new Date();
+    await target.save();
+    return c.json({ ok: true, email, message: 'Token rotated; previous token invalid' });
   });
 
   app.post('/api/admin/blacklist', async (c) => {
